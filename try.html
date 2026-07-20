@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diplomatic Classes</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f3f8ff;font-family:Arial,sans-serif;color:#222;display:flex;min-height:100vh}
+
+.sidebar{width:310px;background:#0757a6;color:white;padding:20px;overflow-y:auto}
+.sidebar h2{text-align:center;margin:0 0 18px;font-size:23px}
+.search-box{width:100%;padding:12px;border:0;border-radius:8px;margin-bottom:12px;font-size:15px}
+
+.sidebar button{width:100%;padding:12px;border:0;border-radius:8px;margin-bottom:10px;font-weight:bold;cursor:pointer}
+.add-btn{background:white;color:#0757a6}
+.delete-btn{background:#ffb3b3;color:#8b0000}
+.delete-all-btn{background:#d60000;color:white}
+
+.student-item{background:rgba(255,255,255,.15);padding:12px;border-radius:8px;margin-bottom:10px;cursor:pointer}
+.student-item:hover{background:rgba(255,255,255,.3)}
+.student-item b{display:block;font-size:16px}
+.student-item span{font-size:13px;opacity:.9}
+
+.main{flex:1;padding:25px;overflow-y:auto}
+.container{max-width:1000px;margin:0 auto;padding:25px;background:white;border:1px solid #4d9de0;border-radius:14px}
+
+h1{text-align:center;color:#0757a6;margin:10px 0 30px}
+.section{margin:20px 0;border:1px solid #9bc9ef;border-radius:12px;overflow:hidden}
+.section h2{margin:0;padding:14px 20px;background:#e8f3ff;color:#0757a6;font-size:20px}
+.section-content{padding:20px}
+
+label{display:block;font-weight:bold;margin:10px 0 6px}
+input,textarea,select{width:100%;padding:12px;border:1px solid #6fa9d8;border-radius:7px;font-size:15px}
+textarea{min-height:85px;resize:vertical}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.personal-layout{display:grid;grid-template-columns:1fr 190px;gap:20px}
+.photo-box{text-align:center}
+.photo-preview{width:170px;height:210px;border:1px solid #4d9de0;border-radius:10px;object-fit:cover;background:#eef7ff}
+
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}
+button{padding:18px;border:0;border-radius:10px;background:#0757a6;color:white;font-size:18px;font-weight:bold;cursor:pointer}
+button:hover{background:#03427e}
+
+#saveStatus{text-align:center;margin-top:15px;font-size:14px;color:#666}
+
+@media(max-width:900px){
+body{flex-direction:column}
+.sidebar{width:100%;max-height:350px}
+.grid,.personal-layout,.buttons{grid-template-columns:1fr}
+.photo-box{order:-1}
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<h2>🏫 DIPLOMATIC CLASSES</h2>
+
+<input id="searchInput" class="search-box" placeholder="Search student...">
+
+<button class="add-btn" id="addStudentBtn">➕ ADD STUDENT</button>
+
+<button class="delete-btn" id="deleteStudentBtn">🗑️ DELETE STUDENT</button>
+
+<button class="delete-all-btn" id="deleteAllBtn">⚠️ DELETE ALL STUDENTS</button>
+
+<div id="studentList">
+<p>Loading students...</p>
+</div>
+
+</div>
+
+<div class="main">
+
+<div class="container">
+
+<h1>DIPLOMATIC CLASSES<br>STUDENT INFORMATION</h1>
+
+<form id="studentForm">
+
+<section class="section">
+<h2>👤 PERSONAL INFORMATION</h2>
+
+<div class="section-content personal-layout">
+
+<div>
+
+<label>Full Name</label> <input id="fullName" type="text">
+
+<label>Full Address</label>
+
+<textarea id="address"></textarea>
+
+<label>School Name</label> <input id="schoolName" type="text">
+
+<div class="grid">
+<div>
+<label>Date of Birth</label>
+<input id="dob" type="date">
+</div>
+
+<div>
+<label>Gender</label>
+<select id="gender">
+<option value="">Select</option>
+<option>Male</option>
+<option>Female</option>
+<option>Other</option>
+</select>
+</div>
+</div>
+
+<div class="grid">
+<div>
+<label>E-mail</label>
+<input id="email" type="email">
+</div>
+
+<div>
+<label>Phone</label>
+<input id="phone" type="tel">
+</div>
+</div>
+
+</div>
+
+<div class="photo-box">
+<label>PHOTO</label>
+<img id="photoPreview" class="photo-preview">
+<input id="photo" type="file" accept="image/*">
+<p>Upload your photo</p>
+</div>
+
+</div>
+</section>
+
+<section class="section">
+<h2>👨‍👩‍👧 PARENT'S INFORMATION</h2>
+
+<div class="section-content grid">
+
+<div><label>Father's Name</label><input id="fatherName"></div>
+<div><label>Mother's Name</label><input id="motherName"></div>
+<div><label>Father's Phone</label><input id="fatherPhone"></div>
+<div><label>Mother's Phone</label><input id="motherPhone"></div>
+<div><label>Father's E-mail</label><input id="fatherEmail"></div>
+<div><label>Mother's E-mail</label><input id="motherEmail"></div>
+
+</div>
+</section>
+
+<section class="section">
+<h2>🎓 ACADEMIC INFORMATION</h2>
+
+<div class="section-content">
+
+<label>Favourite Subject</label> <input id="favouriteSubject">
+
+<label>Weak Subject</label> <input id="weakSubject">
+
+<label>Achievement</label>
+
+<textarea id="achievement"></textarea>
+
+<div class="grid">
+<div>
+<label>Previous Year Percentage / Grade</label>
+<input id="percentage">
+</div>
+
+<div>
+<label>Date of Admission</label>
+<input id="admissionDate" type="date">
+</div>
+</div>
+
+</div>
+</section>
+
+<div class="buttons">
+<button type="button" id="progressBtn">📊 CHECK PROGRESS</button>
+<button type="button" id="contactBtn">📞 CONTACT PARENTS</button>
+</div>
+
+<p id="saveStatus">☁️ Select or add a student</p>
+
+</form>
+</div>
+</div>
+
+<script>
+
+const firebaseConfig={
+apiKey:"AIzaSyBaj05KzC1idAXmgUw10Se2E3ae_bqJ_x0",
+authDomain:"sdfg-319f1.firebaseapp.com",
+projectId:"sdfg-319f1",
+storageBucket:"sdfg-319f1.firebasestorage.app",
+messagingSenderId:"422703767645",
+appId:"1:422703767645:web:cac70ebddb11dbc195edb4",
+measurementId:"G-XT02M8LV3Z"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db=firebase.firestore();
+const storage=firebase.storage();
+
+const fields=[
+"fullName","address","schoolName","dob","gender","email","phone",
+"fatherName","motherName","fatherPhone","motherPhone",
+"fatherEmail","motherEmail","favouriteSubject","weakSubject",
+"achievement","percentage","admissionDate"
+];
+
+let currentStudentId=null;
+let currentPhotoPath=null;
+let saveTimer=null;
+
+
+// LOAD STUDENTS
+function loadStudents(searchTerm=""){
+
+db.collection("students")
+.orderBy("updatedAt","desc")
+.get()
+.then(snapshot=>{
+
+const list=document.getElementById("studentList");
+list.innerHTML="";
+
+snapshot.forEach(doc=>{
+
+const data=doc.data();
+const name=data.fullName||"No Name";
+
+if(searchTerm &&
+!name.toLowerCase().includes(searchTerm.toLowerCase()))
+return;
+
+const div=document.createElement("div");
+div.className="student-item";
+
+div.innerHTML=
+`<b>${name}</b>
+<span>${data.schoolName||""}${data.phone?" | "+data.phone:""}</span>`;
+
+div.onclick=()=>{
+currentStudentId=doc.id;
+currentPhotoPath=data.photoPath||null;
+fillForm(data);
+};
+
+list.appendChild(div);
+
+});
+
+if(!list.children.length)
+list.innerHTML="<p>No students found</p>";
+
+});
+
+}
+
+
+// FILL FORM
+function fillForm(data){
+
+fields.forEach(id=>{
+document.getElementById(id).value=data[id]||"";
+});
+
+document.getElementById("photoPreview").src=data.photo||"";
+
+document.getElementById("saveStatus").innerText=
+"☁️ Student loaded from Firebase";
+
+}
+
+
+// GET DATA
+function getData(){
+
+const data={};
+
+fields.forEach(id=>{
+data[id]=document.getElementById(id).value;
+});
+
+return data;
+
+}
+
+
+// AUTO SAVE
+function autoSave(){
+
+if(!currentStudentId)return;
+
+clearTimeout(saveTimer);
+
+document.getElementById("saveStatus").innerText="⌛ Saving...";
+
+saveTimer=setTimeout(()=>{
+
+const data=getData();
+
+data.updatedAt=firebase.firestore.FieldValue.serverTimestamp();
+
+db.collection("students")
+.doc(currentStudentId)
+.set(data,{merge:true})
+.then(()=>{
+
+document.getElementById("saveStatus").innerText="☁️ Saved online";
+loadStudents();
+
+})
+.catch(()=>{
+document.getElementById("saveStatus").innerText="❌ Save failed";
+});
+
+},1000);
+
+}
+
+
+// AUTO SAVE INPUT
+fields.forEach(id=>{
+
+document.getElementById(id)
+.addEventListener("input",autoSave);
+
+document.getElementById(id)
+.addEventListener("change",autoSave);
+
+});
+
+
+// ADD STUDENT
+document.getElementById("addStudentBtn")
+.addEventListener("click",()=>{
+
+db.collection("students")
+.add({
+
+fullName:"New Student",
+createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+
+})
+.then(doc=>{
+
+currentStudentId=doc.id;
+currentPhotoPath=null;
+
+document.getElementById("studentForm").reset();
+document.getElementById("photoPreview").src="";
+
+document.getElementById("saveStatus").innerText=
+"✍️ New student created";
+
+loadStudents();
+
+});
+
+});
+
+
+// DELETE CURRENT STUDENT
+document.getElementById("deleteStudentBtn")
+.addEventListener("click",async()=>{
+
+if(!currentStudentId){
+
+alert("Please select a student first.");
+return;
+
+}
+
+const name=document.getElementById("fullName").value||"this student";
+
+if(!confirm("Delete "+name+" permanently?"))
+return;
+
+try{
+
+if(currentPhotoPath){
+
+await storage.ref(currentPhotoPath).delete()
+.catch(()=>{});
+
+}
+
+await db.collection("students")
+.doc(currentStudentId)
+.delete();
+
+currentStudentId=null;
+currentPhotoPath=null;
+
+document.getElementById("studentForm").reset();
+document.getElementById("photoPreview").src="";
+
+document.getElementById("saveStatus").innerText=
+"🗑️ Student deleted";
+
+loadStudents();
+
+}catch(error){
+
+alert("Delete failed: "+error.message);
+
+}
+
+});
+
+
+// DELETE ALL STUDENTS
+document.getElementById("deleteAllBtn")
+.addEventListener("click",async()=>{
+
+const firstConfirm=confirm(
+"⚠️ WARNING!\n\nDelete ALL students permanently?"
+);
+
+if(!firstConfirm)return;
+
+const secondConfirm=confirm(
+"This cannot be undone.\n\nAre you REALLY sure?"
+);
+
+if(!secondConfirm)return;
+
+try{
+
+const snapshot=await db.collection("students").get();
+
+const batch=db.batch();
+
+snapshot.forEach(doc=>{
+batch.delete(doc.ref);
+});
+
+await batch.commit();
+
+currentStudentId=null;
+currentPhotoPath=null;
+
+document.getElementById("studentForm").reset();
+document.getElementById("photoPreview").src="";
+
+document.getElementById("saveStatus").innerText=
+"🗑️ All students deleted";
+
+loadStudents();
+
+}catch(error){
+
+alert("Delete all failed: "+error.message);
+
+}
+
+});
+
+
+// PHOTO UPLOAD
+document.getElementById("photo")
+.addEventListener("change",async function(){
+
+if(!currentStudentId){
+
+alert("First add or select a student.");
+return;
+
+}
+
+const file=this.files[0];
+
+if(!file)return;
+
+document.getElementById("photoPreview").src=
+URL.createObjectURL(file);
+
+document.getElementById("saveStatus").innerText=
+"📸 Uploading photo...";
+
+try{
+
+const path=
+"studentPhotos/"+currentStudentId+"_"+Date.now()+"_"+file.name;
+
+const ref=storage.ref(path);
+
+await ref.put(file);
+
+const photoURL=await ref.getDownloadURL();
+
+await db.collection("students")
+.doc(currentStudentId)
+.set({
+
+photo:photoURL,
+photoPath:path,
+updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+
+},{merge:true});
+
+currentPhotoPath=path;
+
+document.getElementById("saveStatus").innerText=
+"☁️ Photo saved online";
+
+loadStudents();
+
+}catch(error){
+
+alert("Photo upload failed: "+error.message);
+
+}
+
+});
+
+
+// SEARCH
+document.getElementById("searchInput")
+.addEventListener("input",function(){
+
+loadStudents(this.value);
+
+});
+
+
+// PROGRESS
+document.getElementById("progressBtn")
+.addEventListener("click",function(){
+
+if(!currentStudentId){
+
+alert("First select a student.");
+return;
+
+}
+
+autoSave();
+
+window.location.href="report1.html";
+
+});
+
+
+// CONTACT PARENTS
+document.getElementById("contactBtn")
+.addEventListener("click",function(){
+
+if(!currentStudentId){
+
+alert("First select a student.");
+return;
+
+}
+
+const mother=document.getElementById("motherPhone").value.trim();
+const father=document.getElementById("fatherPhone").value.trim();
+
+const number=mother||father;
+
+if(!number){
+
+alert("Please enter Mother's or Father's phone number first.");
+return;
+
+}
+
+window.open(
+"https://wa.me/"+number.replace(/\D/g,""),
+"_blank"
+);
+
+});
+
+
+// START
+loadStudents();
+
+</script>
+
+</body>
+</html>
